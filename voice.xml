@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<vxml version="1.0">
+
+  <!-- user hears welcome the first time -->
+  <form id="intro">
+     <block>
+        <audio>Welcome</audio>
+        <goto next="#make_choice"/>
+     </block>
+  </form>
+
+  <menu id="make_choice" dtmf="true">
+    <prompt>
+      <audio>Say survey, weather, news, or quit.</audio>
+    </prompt>
+
+    <!-- next attribute takes you to the appropriate documents
+     or anchor within the current document -->
+    <choice next="http://www.hostname.com/survey.vxml">survey</choice>
+    <choice next="http://www.hostname.com/weather.vxml">weather</choice>
+    <choice next="#news_report">news</choice>
+    <choice next="#quit_app">quit</choice>
+    
+    <catch event="nomatch noinput help">
+      <reprompt />
+    </catch>
+  </menu>
+
+  <!-- give the news -->
+  <form id="news_report">
+    <block>
+      <audio>Sports news!
+      Michael Jordan returned to the NBA hardcourt for the first time
+      in nearly 40 months.</audio>
+      <goto next="#make_choice"/>
+    </block>
+  </form>
+  
+  <!-- quit the application -->
+  <form id="quit_app">
+      <block>
+        <audio>Goodbye!</audio>
+      </block>
+  </form>
+</vxml>
