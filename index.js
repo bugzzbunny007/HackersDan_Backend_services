@@ -110,3 +110,80 @@ app.listen(port, () => {
 
   whatsappmessage();
 });
+
+
+
+
+
+
+
+
+
+const request = require('supertest');
+const express = require('express');
+const app = express();
+const apiRoutes = require('../routes/apiRoutes');
+
+app.use(express.json());
+app.use('/api', apiRoutes);
+
+describe('GET /api/AffiliateGroupContributor', () => {
+    it('should return 400 if EffectiveDate is missing', async () => {
+        const res = await request(app).get('/api/AffiliateGroupContributor');
+        expect(res.statusCode).toEqual(400);
+        expect(res.body.message).toEqual('EffectiveDate is required');
+    });
+
+    it('should return 400 if neither affiliateGroupLegalEntityID nor contributorLegalEntityID is provided', async () => {
+        const res = await request(app)
+            .get('/api/AffiliateGroupContributor')
+            .query({ EffectiveDate: '2024-07-15' });
+        expect(res.statusCode).toEqual(400);
+        expect(res.body.message).toEqual('Either affiliateGroupLegalEntityID or contributorLegalEntityID is required');
+    });
+
+    it('should call fetchDataByAffiliateGroup when affiliateGroupLegalEntityID is provided', async () => {
+        const fetchDataByAffiliateGroup = jest.spyOn(require('../services/affiliateGroupContributorService'), 'fetchDataByAffiliateGroup');
+        fetchDataByAffiliateGroup.mockResolvedValue({ data: 'mockData' });
+
+        const res = await request(app)
+            .get('/api/AffiliateGroupContributor')
+            .query({ affiliateGroupLegalEntityID: 1, EffectiveDate: '2024-07-15' });
+        
+        expect(fetchDataByAffiliateGroup).toHaveBeenCalledWith(1, '2024-07-15');
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toEqual({ data: 'mockData' });
+
+        fetchDataByAffiliateGroup.mockRestore();
+    });
+
+    it('should call fetchDataByContributor when contributorLegalEntityID is provided', async () => {
+        const fetchDataByContributor = jest.spyOn(require('../services/affiliateGroupContributorService'), 'fetchDataByContributor');
+        fetchDataByContributor.mockResolvedValue({ data: 'mockData' });
+
+        const res = await request(app)
+            .get('/api/AffiliateGroupContributor')
+            .query({ contributorLegalEntityID: 1, EffectiveDate: '2024-07-15' });
+
+        expect(fetchDataByContributor).toHaveBeenCalledWith(1, '2024-07-15');
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toEqual({ data: 'mockData' });
+
+        fetchDataByContributor.mockRestore();
+    });
+
+    it('should return 500 if an error occurs', async () => {
+        const fetchDataByAffiliateGroup = jest.spyOn(require('../services/affiliateGroupContributorService'), 'fetchDataByAffiliateGroup');
+        fetchDataByAffiliateGroup.mockRejectedValue(new Error('Test error'));
+
+        const res = await request(app)
+            .get('/api/AffiliateGroupContributor')
+            .query({ affiliateGroupLegalEntityID: 1, EffectiveDate: '2024-07-15' });
+
+        expect(res.statusCode).toEqual(500);
+        expect(res.body.message).toEqual('An error occurred');
+        expect(res.body.error).toEqual('Test error');
+
+        fetchDataByAffiliateGroup.mockRestore();
+    });
+});
